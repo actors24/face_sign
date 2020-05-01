@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/student_face_sign.css' %}"  media="screen,projection"/>
+{% endblock %}
+
+{% block title %}学生签到页面{% endblock %}
+
+{% block content %}
+<a class="endsign" href="{% url 'teacher' %}">结束签到</a>
+
+<div class="videoall">
+<div class="videoblock">
+<video id="video" width="500px" height="500px" autoplay="autoplay"></video>
+<canvas id="canvas" width="500px" height="500px" style="visibility: hidden;"></canvas>
+</div>
+
+<div class="studenname">
+<span id="signstudent">扫描中...</span>
+</div>
+</div>
+<script>
+getMedia();
+setInterval(takePhotoAndUpload,1200);
+
+function getMedia() {
+    let constraints = {
+        video: {width: 500, height: 500},
+        audio: true
+    };
+    let video = document.getElementById("video");
+    let promise = navigator.mediaDevices.getUserMedia(constraints);
+    promise.then(function (MediaStream) {
+        video.srcObject = MediaStream;
+        video.play();
+    });
+}
+function takePhoto() {
+    let video2 = document.getElementById("video");
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video2, 0, 0, 500, 500);
+}
+function uploadPhoto() {
+    var imgData=document.getElementById("canvas").toDataURL("image/jpg");
+    var data=imgData.substr(22);
+    var url = "/studentfacesign/{{ course_id }}/";
+    $.post(url,{image:data,},
+    function(data,status){
+        if (data.name != null)
+            if (data.repeat === true)
+                $("#signstudent").html(data.no+' '+data.name+'<br>已签到成功，无需重复签到。');
+            else
+                $("#signstudent").html(data.no+' '+data.name+'<br>签到成功!!!');
+    },"json")
+}
+function takePhotoAndUpload() {
+    {#setTimeout(takePhoto,1000)#}
+    takePhoto()
+    uploadPhoto()
+}
+</script>
+{% endblock %}
+
